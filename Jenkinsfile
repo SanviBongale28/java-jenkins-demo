@@ -4,32 +4,38 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                echo 'Cloning repository'
                 checkout scm
             }
         }
 
         stage('Build') {
             steps {
-                echo 'Building Java application'
                 sh 'mvn clean package'
             }
         }
 
-        stage('Test') {
+        stage('Docker Build') {
             steps {
-                echo 'Running tests'
-                sh 'mvn test'
+                sh 'docker build -t java-jenkins-demo:latest .'
+            }
+        }
+
+        stage('Docker Run') {
+            steps {
+                sh '''
+                  docker rm -f java-jenkins-demo || true
+                  docker run -d --name java-jenkins-demo java-jenkins-demo:latest
+                '''
             }
         }
     }
 
     post {
         success {
-            echo 'Build completed successfully'
+            echo 'Dockerized CI pipeline SUCCESS'
         }
         failure {
-            echo 'Build failed'
+            echo 'Pipeline FAILED'
         }
     }
 }
